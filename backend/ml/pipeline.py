@@ -1,4 +1,5 @@
 import pandas as pd
+import numpy as np
 
 def load_data():
     try:
@@ -20,20 +21,48 @@ def load_data():
 
 
 def aggregate(trips):
-    # ✅ Safety check — ensure required columns exist
     required = ["tpep_pickup_datetime", "PULocationID", "trip_distance", "fare_amount"]
     missing = [col for col in required if col not in trips.columns]
     if missing:
-        raise ValueError(f"Missing columns in trips data: {missing}")
+        raise ValueError(f"Missing columns: {missing}")
 
     trips = trips.copy()
+
     trips["hour"] = pd.to_datetime(trips["tpep_pickup_datetime"]).dt.hour
-    trips["dow"] = pd.to_datetime(trips["tpep_pickup_datetime"]).dt.dayofweek
 
     grouped = trips.groupby("PULocationID").agg(
         trip_distance=("trip_distance", "mean"),
         fare_amount=("fare_amount", "mean"),
-        demand=("PULocationID", "count")  # ✅ Named aggregation — avoids rename confusion
+        demand=("PULocationID", "count"),
+        hour=("hour", "mean")   # ✅ FIX
     ).reset_index()
 
     return grouped
+
+def apply_time_boost(demand, current_hour, event_hour):
+    time_diff = abs(event_hour - current_hour)
+
+    if time_diff <= 1:
+        factor = 1.5
+    elif time_diff <= 3:
+        factor = 1.3
+    else:
+        factor = 1.0
+
+    return demand * factor
+
+def build_features(df, event, current_hour):
+    hour_normalized = df["hour"].values / 24.0
+
+    current_hour_normalized = current_hour / 24.0
+    current_hour_feature = np.full(len(df), current_hour_normalized)
+
+    features = np.column_stack([
+        df["demand"].values,
+        df["trip_distance"].values,
+        df["fare_amount"].values,
+        hour_normalized,
+        current_hour_feature
+    ])
+
+    return features.astype(float)

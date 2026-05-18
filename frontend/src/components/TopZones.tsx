@@ -1,6 +1,17 @@
-export default function TopZones({ zones, allocations }: any) {
+export default function TopZones({ zones, allocations, data }: any) {
   const isArray = Array.isArray(zones) && zones.length > 0;
-  const sorted = isArray ? [...zones].sort((a, b) => b.demand - a.demand).slice(0, 8) : [];
+
+  // ✅ REPLACED (safe sorting with fallback demand)
+  const sorted = isArray
+    ? (zones || [])
+        .map((z: any) => ({ ...z, demand: z.demand || 0 }))
+        .sort((a, b) =>
+          (data?.gnn_demand?.[b.PULocationID] || 0) -
+          (data?.gnn_demand?.[a.PULocationID] || 0)
+        )
+        .slice(0, 8)
+    : [];
+
   const maxDemand = sorted[0]?.demand || 1;
 
   const allocMap: Record<number, number> = {};

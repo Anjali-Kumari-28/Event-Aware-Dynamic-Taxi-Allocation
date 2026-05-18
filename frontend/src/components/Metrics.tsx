@@ -10,6 +10,7 @@ const EVENT_COLORS: Record<string, string> = {
 };
 
 export default function Metrics({ data }: any) {
+  const time = data?.time_info || {};
   const cardStyle = (accent: string) => ({
     background: "#0a1628",
     border: `1px solid ${accent}44`,
@@ -71,6 +72,19 @@ export default function Metrics({ data }: any) {
         <div style={{ fontSize: 10, color: "#0ff6", letterSpacing: 2, marginBottom: 8 }}>TAXIS DEPLOYED</div>
         <div style={{ fontSize: 28, fontWeight: 700, color: "#a855f7" }}>{totalTaxis}</div>
         <div style={{ fontSize: 11, color: "#0ff5", marginTop: 4 }}>Across {(data.allocations || []).length} zones</div>
+      </div>
+      <div style={cardStyle("#06b6d4")}>
+        <div style={{ fontSize: 10 }}>TIME CONTEXT</div>
+        <div style={{ fontSize: 18, fontWeight: 700 }}>
+          {time.hour ?? "--"}:00
+        </div>
+
+        <div style={{ fontSize: 12, color: "#0ff5" }}>
+         Rush Hour: {time.rush_hour_detected ? "YES" : "NO"}
+        </div>
+        <div style={{ fontSize: 12 }}>
+         Boost: {time.time_boost_factor ?? 1}x
+        </div>
       </div>
     </div>
   );
